@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ur">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Urdu Doodles</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-boil="0">
+  <div id="stage"></div>
+
+  <div id="banner">
+    <div class="bub"></div>
+    <div class="txt">
+      <div class="ur-line"><span class="num"></span><span class="ur"></span><span class="dot"></span></div>
+      <div class="roman"></div>
+    </div>
+  </div>
+
+  <div id="picker">
+    <div class="p-title">
+      <div class="bub"></div>
+      <div class="p-title-txt">
+        <div class="ur">چلو کھیلیں!</div>
+        <div class="roman">chalo khelein! · let's play!</div>
+      </div>
+    </div>
+    <div class="cards">
+      <button class="card" data-game="animals" data-frame="card-a" data-icon="cat">
+        <div class="frame"></div><div class="icon"></div>
+        <div class="ur">جانور</div><div class="roman">jaanwar · animals</div>
+      </button>
+      <button class="card" data-game="balloons" data-frame="card-b" data-icon="balloon-red">
+        <div class="frame"></div><div class="icon"></div>
+        <div class="ur">غبارے</div><div class="roman">ghubaare · balloons</div>
+      </button>
+      <button class="card" data-game="counting" data-frame="card-c" data-icon="apple">
+        <div class="frame"></div><div class="icon"></div>
+        <div class="ur">گنتی</div><div class="roman">ginti · counting</div>
+      </button>
+    </div>
+    <div class="p-foot">
+      <div class="lock"><span class="lock-dot"></span><span class="lock-txt"></span></div>
+      <div class="combo">Grown-ups: hold <kbd>⌃ control</kbd> <kbd>⌥ option</kbd> <kbd>⌘ command</kbd> and type <kbd>B</kbd><kbd>Y</kbd><kbd>E</kbd> to quit &nbsp;·&nbsp; same keys + <kbd>M</kbd> comes back to this menu</div>
+    </div>
+  </div>
+
+  <div id="corner-hint">⌃⌥⌘ M · menu</div>
+
+  <script src="words.js"></script>
+  <script src="voice/manifest.js"></script>
+  <script src="doodle-engine.js"></script>
+  <script src="doodles.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
