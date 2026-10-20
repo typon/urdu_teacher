@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Word Recorder</title>
+<style>
+  :root {
+    --ink: #3b2a20; --paper: #fbf3e2; --card: #fffaf0; --muted: #8a6d58;
+    --red: #ef5b4c; --green: #5cb85c; --soft: #f3e4c6;
+    --ur: "Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", "Geeza Pro", serif;
+    --fun: "Chalkboard SE", "Noteworthy", "Comic Sans MS", cursive;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); font-family: -apple-system, system-ui, sans-serif; }
+  body { display: grid; grid-template-columns: 300px 1fr; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+
+  /* word list */
+  aside { border-right: 3px solid var(--ink); overflow-y: auto; padding: 18px 14px 40px; background: #f8ecd3; }
+  aside h1 { font-family: var(--fun); font-size: 22px; margin: 0 0 4px; }
+  .progress { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .bar { height: 10px; border: 2px solid var(--ink); border-radius: 8px; overflow: hidden; background: var(--card); margin-bottom: 16px; }
+  .bar i { display: block; height: 100%; background: var(--green); width: 0; transition: width .3s; }
+  .group { font-family: var(--fun); font-size: 14px; margin: 16px 4px 6px; color: var(--muted); }
+  .item {
+    display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+    background: none; border: 2px solid transparent; border-radius: 10px; padding: 3px 8px; margin: 1px 0;
+  }
+  .item:hover { background: var(--card); }
+  .item.sel { border-color: var(--ink); background: var(--card); }
+  .item .tick { width: 20px; height: 20px; border: 2px solid var(--ink); border-radius: 50%; flex: none; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #fff; }
+  .item.done .tick { background: var(--green); }
+  .item.done .tick::after { content: "✓"; }
+  .item .u { font-family: var(--ur); font-size: 18px; line-height: 2; direction: rtl; }
+  .item .r { font-size: 12px; color: var(--muted); margin-left: auto; }
+
+  /* recorder */
+  main { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; gap: 18px; min-width: 0; }
+  .card { background: var(--card); border: 3px solid var(--ink); border-radius: 28px 34px 26px 32px; padding: 10px 40px 22px; text-align: center; min-width: min(560px, 90%); box-shadow: 0 5px 0 var(--ink); }
+  .word { font-family: var(--ur); font-size: 76px; line-height: 2.1; direction: rtl; }
+  .roman { font-family: var(--fun); font-size: 26px; margin-top: -14px; }
+  .tip { font-size: 15px; color: var(--muted); margin-top: 8px; }
+  .count { font-size: 13px; color: var(--muted); }
+
+  .rec {
+    width: 132px; height: 132px; border-radius: 50%; border: 4px solid var(--ink); background: var(--red);
+    box-shadow: 0 6px 0 var(--ink); display: grid; place-items: center; transition: transform .08s;
+  }
+  .rec:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--ink); }
+  .rec .dot { width: 46px; height: 46px; border-radius: 50%; background: #fff; transition: border-radius .15s; }
+  .rec.on { animation: pulse 1s infinite; }
+  .rec.on .dot { border-radius: 8px; width: 40px; height: 40px; }
+  @keyframes pulse { 50% { box-shadow: 0 6px 0 var(--ink), 0 0 0 16px rgba(239, 91, 76, .25); } }
+  .rec:disabled { opacity: .5; cursor: default; }
+  .hint { font-size: 14px; color: var(--muted); text-align: center; }
+  kbd { font-family: var(--fun); border: 2px solid var(--ink); border-radius: 6px; padding: 0 6px; background: var(--card); box-shadow: 0 2px 0 var(--ink); }
+
+  canvas { width: min(560px, 90%); height: 90px; background: var(--card); border: 2px solid var(--ink); border-radius: 14px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .btn { border: 2px solid var(--ink); background: var(--card); border-radius: 12px; padding: 8px 16px; box-shadow: 0 3px 0 var(--ink); }
+  .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .btn.primary { background: #ffd34e; }
+  .status { min-height: 20px; font-size: 14px; }
+  .status.err { color: #c0392b; }
+  .finish { display: none; text-align: center; font-size: 15px; }
+  .finish.on { display: block; }
+  code { background: var(--soft); padding: 2px 6px; border-radius: 6px; }
+</style>
+</head>
+<body>
+  <aside>
+    <h1>Word Recorder</h1>
+    <div class="progress" id="progress">loading…</div>
+    <div class="bar"><i id="bar"></i></div>
+    <div id="list"></div>
+  </aside>
+
+  <main>
+    <div class="count" id="count"></div>
+    <div class="card">
+      <div class="word" id="word">…</div>
+      <div class="roman" id="roman"></div>
+      <div class="tip" id="tip"></div>
+    </div>
+
+    <button class="rec" id="rec" title="Record (space)"><span class="dot"></span></button>
+    <div class="hint"><kbd>space</kbd> start / stop &nbsp;·&nbsp; <kbd>P</kbd> play &nbsp;·&nbsp; <kbd>↑</kbd><kbd>↓</kbd> or <kbd>←</kbd><kbd>→</kbd> move between words</div>
+
+    <canvas id="wave" width="1120" height="180"></canvas>
+    <div class="row">
+      <button class="btn" id="prev">← Previous</button>
+      <button class="btn" id="play" disabled>▶ Play</button>
+      <button class="btn" id="del" disabled>Delete</button>
+      <button class="btn primary" id="next">Next →</button>
+    </div>
+    <div class="status" id="status"></div>
+    <div class="finish" id="finish">🎉 All words recorded! Close the Terminal window, then run <code>./build.sh</code> to put your voice in the game.</div>
+  </main>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const GROUPS = [
+    ['Game names', (id) => id === 'hello' || id.startsWith('g_')],
+    ['Animals', (id) => id.startsWith('a_')],
+    ['Animal sounds', (id) => id.startsWith('s_')],
+    ['Balloon colours', (id) => id.startsWith('c_')],
+    ['Numbers', (id) => /^n\d+$/.test(id)],
+    ['Celebrations', (id) => id.startsWith('f_')],
+  ];
+  const TIPS = {
+    word: 'Say it like you are showing him something wonderful — big smile, a little slow.',
+    sound: 'Be silly! Make the animal noise the way you would to make him giggle.',
+    cheer: 'Big proud cheer — he just counted to ten!',
+    title: 'Excited, like announcing a new game.',
+  };
+  const tipFor = (id) => id.startsWith('s_') ? TIPS.sound : id.startsWith('f_') ? TIPS.cheer
+    : (id === 'hello' || id.startsWith('g_')) ? TIPS.title : TIPS.word;
+  const clean = (s) => s.replace(/!\s*$/, '').replace(/!\s+/g, '، ').trim();
+
+  let words = {}, done = {}, order = [], idx = 0;
+  let ctx = null, stream = null, node = null, recording = false, chunks = [], busy = false;
+  let lastSamples = null;
+  const canvas = $('wave'), g = canvas.getContext('2d');
+
+  // ─── data ───
+  async function load() {
+    const r = await fetch('/words');
+    const j = await r.json();
+    words = j.words; done = j.done;
+    order = [];
+    const list = $('list'); list.innerHTML = '';
+    for (const [name, test] of GROUPS) {
+      const ids = Object.keys(words).filter(test);
+      if (!ids.length) continue;
+      const h = document.createElement('div'); h.className = 'group'; h.textContent = name; list.appendChild(h);
+      for (const id of ids) {
+        order.push(id);
+        const b = document.createElement('button');
+        b.className = 'item'; b.dataset.id = id;
+        b.innerHTML = '<span class="tick"></span><span class="u"></span><span class="r"></span>';
+        b.querySelector('.u').textContent = clean(words[id].ur);
+        b.querySelector('.r').textContent = words[id].roman;
+        b.onclick = () => { if (!recording) select(order.indexOf(id)); };
+        list.appendChild(b);
+      }
+    }
+    // anything not in a group goes at the end
+    for (const id of Object.keys(words)) if (!order.includes(id)) order.push(id);
+    const first = order.findIndex((id) => !done[id]);
+    select(first >= 0 ? first : 0);
+  }
+
+  function refreshList() {
+    document.querySelectorAll('.item').forEach((b) => {
+      b.classList.toggle('done', !!done[b.dataset.id]);
+      b.classList.toggle('sel', b.dataset.id === order[idx]);
+    });
+    const n = order.filter((id) => done[id]).length;
+    $('progress').textContent = `${n} of ${order.length} recorded`;
+    $('bar').style.width = (100 * n / order.length) + '%';
+    $('finish').classList.toggle('on', n === order.length);
+  }
+
+  function select(i) {
+    idx = Math.max(0, Math.min(order.length - 1, i));
+    const id = order[idx], w = words[id];
+    $('word').textContent = clean(w.ur);
+    $('roman').textContent = w.roman;
+    $('tip').textContent = tipFor(id);
+    $('count').textContent = `word ${idx + 1} of ${order.length}`;
+    $('play').disabled = $('del').disabled = !done[id];
+    lastSamples = null; drawWave(null);
+    setStatus(done[id] ? 'Already recorded — press space to redo it.' : '');
+    refreshList();
+    const sel = document.querySelector('.item.sel');
+    if (sel) sel.scrollIntoView({ block: 'nearest' });
+  }
+
+  function setStatus(msg, err) { const s = $('status'); s.textContent = msg; s.classList.toggle('err', !!err); }
+
+  // ─── microphone ───
+  async function ensureMic() {
+    if (node) return;
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { channelCount: 1, echoCancellation: false, noiseSuppression: true, autoGainControl: false },
+    });
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const code = `class Rec extends AudioWorkletProcessor {
+      process(inputs) { const c = inputs[0] && inputs[0][0]; if (c) this.port.postMessage(c.slice(0)); return true; }
+    } registerProcessor('rec', Rec);`;
+    const url = URL.createObjectURL(new Blob([code], { type: 'application/javascript' }));
+    await ctx.audioWorklet.addModule(url);
+    const src = ctx.createMediaStreamSource(stream);
+    node = new AudioWorkletNode(ctx, 'rec');
+    const mute = ctx.createGain(); mute.gain.value = 0;
+    src.connect(node); node.connect(mute); mute.connect(ctx.destination);
+    node.port.onmessage = (e) => {
+      if (!recording) return;
+      chunks.push(e.data);
+      if (chunks.length % 6 === 0) drawLive();
+    };
+  }
+
+  async function toggle() {
+    if (busy) return;
+    if (!recording) {
+      try { await ensureMic(); } catch (e) {
+        setStatus('Microphone blocked — allow it in the address bar / System Settings → Privacy → Microphone.', true);
+        return;
+      }
+      if (ctx.state === 'suspended') await ctx.resume();
+      chunks = []; recording = true;
+      $('rec').classList.add('on'); setStatus('Recording… press space when you are done.');
+      return;
+    }
+    recording = false; busy = true;
+    $('rec').classList.remove('on');
+    // grab a moment more so the end of the word isn't clipped
+    await new Promise((r) => setTimeout(r, 120));
+    try { await finish(); } finally { busy = false; }
+  }
+
+  async function finish() {
+    const total = chunks.reduce((n, c) => n + c.length, 0);
+    const raw = new Float32Array(total);
+    let o = 0; for (const c of chunks) { raw.set(c, o); o += c.length; }
+    const sr = ctx.sampleRate;
+    const clip = tidy(raw, sr);
+    if (!clip) { setStatus("Didn't hear anything — try again a little louder.", true); drawWave(null); return; }
+    lastSamples = clip; drawWave(clip);
+    const id = order[idx];
+    setStatus('Saving…');
+    const r = await fetch('/save/' + id, { method: 'PUT', body: wav(clip, sr), headers: { 'Content-Type': 'audio/wav' } });
+    if (!r.ok) { setStatus('Could not save: ' + await r.text(), true); return; }
+    done[id] = true;
+    $('play').disabled = $('del').disabled = false;
+    refreshList();
+    setStatus('Saved ✓  Listen back — press space to redo, or → for the next word.');
+    play();
+  }
+
+  // trim silence at both ends, normalise the volume, soften the edges
+  function tidy(x, sr) {
+    let peak = 0; for (let i = 0; i < x.length; i++) peak = Math.max(peak, Math.abs(x[i]));
+    if (peak < 0.015) return null;
+    const th = Math.max(0.01, peak * 0.07);
+    const win = Math.round(sr * 0.01);
+    const loud = (i) => { let m = 0; for (let k = i; k < Math.min(x.length, i + win); k++) m = Math.max(m, Math.abs(x[k])); return m > th; };
+    let a = 0; while (a < x.length && !loud(a)) a += win;
+    let b = x.length - win; while (b > a && !loud(b)) b -= win;
+    a = Math.max(0, a - Math.round(sr * 0.08));
+    b = Math.min(x.length, b + win + Math.round(sr * 0.18));
+    const y = x.slice(a, b);
+    const gain = Math.min(8, 0.89 / peak);
+    const fade = Math.round(sr * 0.012);
+    for (let i = 0; i < y.length; i++) {
+      let f = 1;
+      if (i < fade) f = i / fade; else if (i > y.length - fade) f = (y.length - i) / fade;
+      y[i] *= gain * f;
+    }
+    return y;
+  }
+
+  function wav(samples, sr) {
+    const buf = new ArrayBuffer(44 + samples.length * 2), v = new DataView(buf);
+    const str = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+    str(0, 'RIFF'); v.setUint32(4, 36 + samples.length * 2, true); str(8, 'WAVE');
+    str(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+    str(36, 'data'); v.setUint32(40, samples.length * 2, true);
+    for (let i = 0; i < samples.length; i++) {
+      const s = Math.max(-1, Math.min(1, samples[i]));
+      v.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+    }
+    return new Blob([buf], { type: 'audio/wav' });
+  }
+
+  // ─── playback / delete ───
+  let player = null;
+  function play() {
+    const id = order[idx];
+    if (!done[id]) return;
+    if (player) player.pause();
+    player = new Audio('/clip/' + id + '?t=' + Date.now());
+    player.play().catch(() => {});
+  }
+  async function del() {
+    const id = order[idx];
+    if (!done[id] || !confirm('Delete your recording of "' + words[id].roman + '"?')) return;
+    await fetch('/clip/' + id, { method: 'DELETE' });
+    done[id] = false; select(idx);
+  }
+
+  // ─── waveform ───
+  function drawWave(s, color) {
+    const W = canvas.width, H = canvas.height;
+    g.clearRect(0, 0, W, H);
+    g.strokeStyle = color || '#3b2a20'; g.lineWidth = 3; g.lineCap = 'round';
+    if (!s || !s.length) { g.globalAlpha = .25; g.beginPath(); g.moveTo(20, H / 2); g.lineTo(W - 20, H / 2); g.stroke(); g.globalAlpha = 1; return; }
+    const bars = 140, step = Math.max(1, Math.floor(s.length / bars));
+    for (let i = 0; i < bars; i++) {
+      let m = 0; for (let k = i * step; k < Math.min(s.length, (i + 1) * step); k++) m = Math.max(m, Math.abs(s[k]));
+      const h = Math.max(2, m * (H - 24));
+      const x = 20 + i * (W - 40) / (bars - 1);
+      g.beginPath(); g.moveTo(x, H / 2 - h / 2); g.lineTo(x, H / 2 + h / 2); g.stroke();
+    }
+  }
+  function drawLive() {
+    const recent = chunks.slice(-400);
+    const n = recent.reduce((a, c) => a + c.length, 0);
+    const flat = new Float32Array(n); let o = 0; for (const c of recent) { flat.set(c, o); o += c.length; }
+    drawWave(flat, '#ef5b4c');
+  }
+
+  // ─── controls ───
+  $('rec').onclick = toggle;
+  $('play').onclick = play;
+  $('del').onclick = del;
+  $('next').onclick = () => { if (!recording) select(idx + 1); };
+  $('prev').onclick = () => { if (!recording) select(idx - 1); };
+  window.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT') return;
+    if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) toggle(); }
+    else if (recording) return;
+    else if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'Enter') { e.preventDefault(); select(idx + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); select(idx - 1); }
+    else if (e.key === 'p' || e.key === 'P') play();
+  });
+  // buttons shouldn't keep keyboard focus (space would "click" them)
+  document.addEventListener('mouseup', () => { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); });
+
+  load().catch((e) => setStatus('Could not load the word list: ' + e, true));
+})();
+</script>
+</body>
+</html>

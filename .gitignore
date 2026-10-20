@@ -2,6 +2,13 @@
 build/
 .venv/
 game/voice/
+audition/
+.env
 
 .DS_Store
 __pycache__/
+
+# your own voice recordings (made with word_recorder) stay on this Mac;
+# delete these two lines if you want them in the repo
+my-voice/*
+!my-voice/README.txt

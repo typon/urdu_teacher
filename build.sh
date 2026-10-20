@@ -1,6 +1,8 @@
 #!/bin/bash
 # Builds "Urdu Doodles.app" in ./build — run it from Terminal:   ./build.sh
-#   ./build.sh --force    remakes all the voice clips (e.g. after changing URDU_VOICE)
+#   ./build.sh --audition      compare Urdu voice engines side by side (no build)
+#   ./build.sh --force         re-record all the voice clips
+#   ./build.sh --only a_cat    re-record just one clip (after fixing it in game/words.js)
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -29,6 +31,9 @@ if [ -x .venv/bin/python ]; then
   .venv/bin/python tools/make_voices.py "$@" || echo "  (voice step had a problem — the game will speak with the Mac's built-in voice instead)"
 else
   python3 tools/make_voices.py "$@" || echo "  (voice step had a problem — the game will speak with the Mac's built-in voice instead)"
+fi
+if [[ " $* " == *" --audition "* ]]; then
+  exit 0   # audition only records samples; nothing to build
 fi
 if [ ! -f game/voice/manifest.js ]; then
   mkdir -p game/voice && echo "window.VOICE_FILES = {};" > game/voice/manifest.js
