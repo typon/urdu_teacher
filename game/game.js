@@ -66,6 +66,8 @@
       blip() { tone({ type: 'square', f0: 700, f1: 480, dur: 0.07, vol: 0.05 }); },
       cheer() { [0, 4, 7, 12, 16, 19].forEach((s, i) => tone({ type: 'triangle', f0: 523 * Math.pow(2, s / 12), dur: 0.4, vol: 0.3, delay: i * 0.08 })); },
       whoosh() { noise(0.4, 700, 0.35); },
+      chomp() { noise(0.05, 900, 0.7); noise(0.05, 650, 0.6, 0.11); tone({ type: 'triangle', f0: 320, f1: 170, dur: 0.1, vol: 0.18 }); },
+      burp() { tone({ type: 'sawtooth', f0: 130, f1: 70, dur: 0.45, vol: 0.1 }); noise(0.38, 260, 0.3); },
     };
   })();
 
@@ -159,10 +161,16 @@
       this.el.style.width = this.w + 'px'; this.el.style.height = this.h + 'px';
       this.el.style.transformOrigin = this.anchor === 'bottom' ? '50% 100%' : '50% 50%';
       this.el.appendChild(Doodle.svg(name));
+      this.art = name;
       this.x = 0; this.y = 0; this.rot = 0; this.sx = 1; this.sy = 1; this.flip = 1; this.z = opts.z || 10;
       this.q = []; this.o = {}; this.ph = Math.floor(Math.random() * 12);
       (opts.parent || stage).appendChild(this.el);
       sprites.add(this);
+    }
+    setArt(name) {
+      if (this.art === name) return;
+      this.art = name;
+      this.el.replaceChild(Doodle.svg(name), this.el.firstChild);
     }
     play(frames) { this.q = frames.slice(); return this; }
     step() { this.o = this.q.length ? this.q.shift() : {}; }
@@ -522,7 +530,130 @@
     },
   };
 
-  const GAMES = { animals: Animals, balloons: Balloons, counting: Counting };
+  // ═══════════════════════════ GAME 4: Food (کھانا) ═══════════════════════════
+  const FOODS = [
+    ['food-roti', 'k_roti'], ['food-naan', 'k_naan'], ['food-bread', 'k_bread'], ['food-eggs', 'k_eggs'],
+    ['food-milk', 'k_milk'], ['food-dahi', 'k_dahi'], ['food-rice', 'k_rice'], ['food-daal', 'k_daal'],
+    ['food-biryani', 'k_biryani'], ['food-chai', 'k_chai'], ['food-samosa', 'k_samosa'], ['food-jalebi', 'k_jalebi'],
+    ['food-gulabjamun', 'k_gulabjamun'], ['food-chocolate', 'k_chocolate'], ['food-biscuit', 'k_biscuit'],
+    ['food-mango', 'k_mango'], ['food-banana', 'k_banana'], ['apple', 'k_apple'],
+  ];
+  const FULL_AT = 8; // bites until the bear's tummy is full
+  const Food = {
+    title: 'g_food',
+    enter() {
+      stage.className = 'scene-kitchen';
+      this.next = bag(FOODS);
+      this.react = bag(['e_hap', 'e_yum', 'e_hap', 'e_more']);
+      this.eaten = 0; this.phase = 'idle'; this.onPlate = null;
+      const tableTop = H() * 0.71;
+      for (const [fx, flip] of [[0.13, 1], [0.87, -1]]) {
+        const w = new Sprite('window', H() * 0.36, { z: 1 });
+        w.x = W() * fx; w.y = H() * 0.47; w.flip = flip;
+      }
+      const bear = new Sprite('bear', H() * 0.62, { z: 5 });
+      bear.x = W() / 2; bear.y = tableTop + H() * 0.21;
+      bear.update = (t) => { if (!bear.q.length) bear.sy = ((t >> 2) % 2) ? 1 : 0.985; };
+      this.bear = bear;
+      const hDiv = H() - tableTop + H() * 0.05, s = Math.max(W() / 1000, hDiv / 260);
+      const table = scenery('table', { left: '0', right: '0', bottom: '0', top: (tableTop - 28 * s) + 'px', zIndex: 8 }, null, 'xMidYMin slice');
+      table.style.zIndex = 8;
+      const plate = new Sprite('plate', H() * 0.085, { anchor: 'center', z: 9 });
+      plate.x = W() / 2; plate.y = tableTop + H() * 0.06;
+      this.plate = plate;
+    },
+    mouth() { const b = this.bear; return [b.x, b.y - b.h + b.h * (172 / 340)]; },
+    belly() { this.bear.sx = 1 + Math.min(this.eaten, FULL_AT) * 0.035; },
+    press(info) {
+      if (this.phase !== 'idle' || Voice.busy()) {
+        if (!this.bear.q.length) this.bear.play(WIGGLE);
+        if (this.onPlate && !this.onPlate.q.length && !this.onPlate.mode) this.onPlate.play(HOP_SMALL);
+        Sfx.blip();
+        return;
+      }
+      const [art, word] = this.next();
+      const s = H() * 0.21;
+      const f = new Sprite(art, s, { anchor: 'center', z: 20 });
+      f.x = clamp((info.x != null ? info.x : Math.random()) * W(), s, W() - s);
+      f.y = H() * 0.36;
+      const x0 = f.x, y0 = f.y, px = this.plate.x, py = this.plate.y - s * 0.3;
+      f.play(POP);
+      f.t = 0;
+      f.update = (t) => {
+        if (f.mode) { f.mode(); return; }
+        f.t++;
+        if (f.t > 6 && f.t <= 12) {
+          const k = (f.t - 6) / 6;
+          f.x = x0 + (px - x0) * k;
+          f.y = y0 + (py - y0) * k - Math.sin(k * Math.PI) * H() * 0.12;
+          f.rot = (1 - k) * (px > x0 ? 20 : -20);
+          if (f.t === 12) { Sfx.hop(); f.play([{ sy: 0.8, sx: 1.15 }, { sy: 1.06 }, {}]); }
+        } else if (f.t > 12 && !f.q.length) {
+          f.rot = ((t + f.ph) >> 2) % 2 ? -5 : 5;
+        }
+      };
+      this.onPlate = f; this.phase = 'serving';
+      Sfx.pop();
+      this.bear.play(HOP_SMALL);
+      const react = this.react();
+      const full = this.eaten + 1 >= FULL_AT;
+      const ids = [word, '~', '~', react].concat(full ? ['~', 'e_full'] : []);
+      const ep = epoch;
+      Voice.say(ids, {
+        onItem: (id) => {
+          if (id === word) Banner.show(word);
+          else if (id === react) this.eat(f);
+          else if (id === 'e_full') { Banner.show('e_full'); this.full(); }
+        },
+        onDone: () => {
+          if (ep !== epoch) return;
+          if (!f.eaten) this.eat(f);
+          if (this.phase === 'serving') this.phase = 'idle';
+        },
+      });
+    },
+    eat(f) {
+      if (f.eaten || f.dead) return;
+      f.eaten = true; f.q = [];
+      this.bear.setArt('bear-open');
+      const x0 = f.x, y0 = f.y;
+      let k = 0;
+      f.mode = () => {
+        k++;
+        const [mx, my] = this.mouth();
+        f.x = x0 + (mx - x0) * (k / 4); f.y = y0 + (my - y0) * (k / 4);
+        f.sx = f.sy = 1 - 0.7 * (k / 4); f.rot += 25;
+        if (k >= 4) { f.remove(); this.chomp(); }
+      };
+    },
+    chomp() {
+      const ep = epoch;
+      this.onPlate = null;
+      Sfx.chomp();
+      this.bear.setArt('bear-chew');
+      const [mx, my] = this.mouth();
+      confetti(mx, my, 6, 0.45);
+      this.eaten++; this.belly();
+      this.bear.play([{ sy: 0.95, sx: 1.04 }, { sy: 1.03 }, { sy: 0.95, sx: 1.04 }, { sy: 1.03 }, { sy: 0.95, sx: 1.04 }, { sy: 1.02 }, {}]);
+      later(1000, ep, () => { if (this.phase !== 'full') this.bear.setArt('bear'); });
+    },
+    full() {
+      const ep = epoch;
+      this.phase = 'full';
+      this.bear.setArt('bear-chew');
+      const wig = [{ rot: -6 }, { rot: -6 }, { rot: 6 }, { rot: 6 }];
+      this.bear.play(wig.concat(wig, wig, [{}]));
+      later(900, ep, () => { Sfx.burp(); this.bear.play([{ sy: 1.08, sx: 0.97 }, { sy: 1.04 }, {}]); });
+      for (let i = 0; i < 4; i++) later(300 + i * 450, ep, () => confetti(rand(0.25, 0.75) * W(), rand(0.2, 0.5) * H(), 14, 1.1));
+      later(3600, ep, () => {
+        this.eaten = 0; this.belly();
+        this.bear.setArt('bear'); this.bear.play(HOP);
+        this.phase = 'idle';
+      });
+    },
+  };
+
+  const GAMES = { animals: Animals, balloons: Balloons, counting: Counting, food: Food };
 
   // ─────────────────────────── game switching ───────────────────────────
   let current = null, epoch = 0;

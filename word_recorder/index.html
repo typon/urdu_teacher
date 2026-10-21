@@ -110,14 +110,19 @@
     ['Balloon colours', (id) => id.startsWith('c_')],
     ['Numbers', (id) => /^n\d+$/.test(id)],
     ['Celebrations', (id) => id.startsWith('f_')],
+    ['Food', (id) => id.startsWith('k_')],
+    ['Eating noises', (id) => id.startsWith('e_')],
   ];
   const TIPS = {
     word: 'Say it like you are showing him something wonderful — big smile, a little slow.',
     sound: 'Be silly! Make the animal noise the way you would to make him giggle.',
     cheer: 'Big proud cheer — he just counted to ten!',
     title: 'Excited, like announcing a new game.',
+    eat: 'Yummy voice — like you just tasted something delicious!',
+    full: 'Pat your tummy — so full and happy!',
   };
-  const tipFor = (id) => id.startsWith('s_') ? TIPS.sound : id.startsWith('f_') ? TIPS.cheer
+  const tipFor = (id) => id === 'e_full' ? TIPS.full : id.startsWith('e_') ? TIPS.eat
+    : id.startsWith('s_') ? TIPS.sound : id.startsWith('f_') ? TIPS.cheer
     : (id === 'hello' || id.startsWith('g_')) ? TIPS.title : TIPS.word;
   const clean = (s) => s.replace(/!\s*$/, '').replace(/!\s+/g, '، ').trim();
 

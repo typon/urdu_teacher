@@ -1,12 +1,13 @@
 # Urdu Doodles ✏️
 
-Three keyboard-mash games that teach Urdu words, drawn as wobbly cartoon doodles.
+Four keyboard-mash games that teach Urdu words, drawn as wobbly cartoon doodles.
 Every key (and every mouse click) does something, and a voice says the word in Urdu.
 
 | Game | What happens on each key press | What he hears |
 |---|---|---|
 | **جانور Jaanwar** (animals) | A doodle animal pops up on the meadow — left-side keys make it appear on the left | *billi! … miyaun miyaun* |
 | **غبارے Ghubaare** (balloons) | A smiling balloon floats up; extra mashing pops balloons into confetti | *laal ghubaara!* |
+| **کھانا Khaana** (food) | A hungry bear gets a Pakistani food on his plate — roti, naan, biryani, anday, dahi, jalebi, chai… — and gobbles it up; after eight bites his tummy is full | *biryaani! … hap! … pait bhar gaya!* |
 | **گنتی Ginti** (counting) | One more apple on the tree, star in the sky or fish in the pond, counted out loud up to ten, then a party | *ek, do, teen … das seb — shaabaash!* |
 
 When he mashes faster than the voice can talk, the extra presses make things hop, wiggle or pop instead, so each new picture always gets its own word.

@@ -30,6 +30,7 @@ body[data-boil="2"] .doodle use:not(.v2) { display: none; }
 #stage.scene-day   { background: radial-gradient(120% 80% at 30% 10%, #fff9ec 0%, #fbf0d8 60%, #f6e6c6 100%); }
 #stage.scene-sky   { background: linear-gradient(180deg, #c9e8fa 0%, #e3f3fb 45%, #fbf3e2 85%); }
 #stage.scene-night { background: linear-gradient(180deg, #1f2657 0%, #2f3672 55%, #47467e 100%); }
+#stage.scene-kitchen { background: repeating-linear-gradient(90deg, #ffe9cf 0 70px, #ffe2c2 70px 140px); }
 #stage.scene-meadow{ background: linear-gradient(180deg, #fff6e2 0%, #eef6d6 60%, #dcefc2 100%); }
 
 .sprite { position: absolute; left: 0; top: 0; will-change: transform; pointer-events: none; }
@@ -89,9 +90,9 @@ body.in-game #corner-hint { display: block; }
 .p-title .ur { font-family: var(--ur); font-size: min(4.6vw, 64px); line-height: 1.7; color: var(--ink); direction: rtl; }
 .p-title .roman { font-family: var(--fun); font-size: min(1.8vw, 24px); color: #7a5a44; margin-top: -.4em; }
 
-.cards { display: flex; gap: 3.5vw; align-items: center; justify-content: center; }
+.cards { display: flex; gap: 2.4vw; align-items: center; justify-content: center; }
 .card {
-  position: relative; width: min(24vw, 300px); aspect-ratio: 300 / 340;
+  position: relative; width: min(20.5vw, 270px); aspect-ratio: 300 / 340;
   border: 0; background: none; padding: 0; cursor: pointer;
   display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
   transform-origin: 50% 90%; font: inherit; color: inherit;
@@ -99,8 +100,8 @@ body.in-game #corner-hint { display: block; }
 .card:focus { outline: none; }
 .card .frame { position: absolute; inset: 0; }
 .card .icon { position: absolute; left: 18%; right: 18%; top: 6%; height: 52%; }
-.card .ur { position: relative; font-family: var(--ur); font-size: min(3.6vw, 48px); line-height: 1.8; color: var(--ink); }
-.card .roman { position: relative; font-family: var(--fun); font-size: min(1.5vw, 19px); color: #7a5a44; margin: -.5em 0 9%; }
+.card .ur { position: relative; font-family: var(--ur); font-size: min(3.1vw, 44px); line-height: 1.8; color: var(--ink); }
+.card .roman { position: relative; font-family: var(--fun); font-size: min(1.35vw, 18px); color: #7a5a44; margin: -.5em 0 9%; }
 
 .p-foot { display: flex; flex-direction: column; align-items: center; gap: 8px; font-family: var(--fun); color: var(--ink); text-align: center; }
 .p-foot .combo { font-size: min(1.4vw, 17px); opacity: .8; }

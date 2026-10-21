@@ -370,7 +370,7 @@
     <path d="M46 26 C180 12 540 12 674 26 C712 34 714 166 674 174 C540 188 180 188 46 174 C8 166 8 34 46 26 Z" fill="#fffaf0"/>
   `});
 
-  const CARD_FILLS = { a: '#ffe0b5', b: '#d6efff', c: '#dff5c9' };
+  const CARD_FILLS = { a: '#ffe0b5', b: '#d6efff', c: '#dff5c9', d: '#ffd9df' };
   for (const [k, col] of Object.entries(CARD_FILLS)) {
     D.define('card-' + k, { w: 300, h: 340, sw: 5.5, amp: 2.6, svg: `
       <path d="M40 16 C120 8 180 8 260 16 C290 20 292 50 290 90 C288 170 290 250 286 310 C284 330 260 332 240 332 C160 336 120 336 60 332 C28 330 14 324 14 296 C10 220 12 140 14 60 C14 30 20 18 40 16 Z" fill="${col}"/>

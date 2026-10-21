@@ -75,7 +75,9 @@ def load_words():
 
 
 def kind(cid):
-    if cid.startswith("s_"):
+    if cid == "e_full":
+        return "cheer"
+    if cid.startswith(("s_", "e_")):
         return "sound"
     if cid.startswith("f_"):
         return "cheer"
